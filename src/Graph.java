@@ -16,7 +16,26 @@ public class Graph {
 	private ArrayList<Contagion> contagions;
 	private String model;
 	
-	//for case where beta is learned for each edge
+	
+	//--------------------------------------------------------------------------------
+	// CONSTRUCTORS
+	//--------------------------------------------------------------------------------
+	
+	//Constructor 1 - for case where beta is constant across graph
+	public Graph(int totalNodes, double epsilon, double beta, String model){
+		this.model = model;
+		this.totalNodes = totalNodes;
+		this.totalNetworkEdges = 0;
+		this.epsilon = epsilon;
+		this.beta = beta;
+		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
+		for(int i=0; i<totalNodes; i++){
+			graph.add(i, new HashMap<Integer,Edge>());
+		}
+	}
+	
+	//Constructor 2 - for case where beta is learned for each edge
+	/*
 	public Graph(int totalNodes, double epsilon, String model){
 		this.model = model;
 		this.totalNodes = totalNodes;
@@ -28,20 +47,11 @@ public class Graph {
 		}
 		this.contagions = new ArrayList<Contagion>();
 	}
+	*/
 	
-	//for case where beta is constant across graph
-	public Graph(int totalNodes, double epsilon, double beta, String model){
-		this.model = model;
-		this.totalNodes = totalNodes;
-		this.totalNetworkEdges = 0;
-		this.epsilon = epsilon;
-		this.beta = beta;
-		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
-		for(int i=0; i<totalNodes; i++){
-			graph.add(i, new HashMap<Integer,Edge>());
-			//graph.get(i).put(i, new Edge(1D-beta));
-		}
-	}
+	//--------------------------------------------------------------------------------
+	// GETTERS
+	//--------------------------------------------------------------------------------
 	
 	public double getGraphEpsilon(){
 		return this.epsilon;
@@ -55,28 +65,40 @@ public class Graph {
 		return this.totalNodes;
 	}
 	
+	public int getTotalNetworkEdges(){
+		return this.totalNetworkEdges;
+	}
+	
+	public String getGraphModel(){
+		return this.model;
+	}
+	
+	//--------------------------------------------------------------------------------
+	// STRUCTURE MODIFIERS
+	//--------------------------------------------------------------------------------
+	
 	public void addEdge(int i, int j, double weight){
-		Edge e = new Edge(weight);
+		Edge e = new Edge(i, j);
+		if(!this.graph.get(i).containsKey(j)){
+			this.totalNetworkEdges += 1;
+		}
 		this.graph.get(i).put(j, e);
 	}
 	
 	public void removeEdge(int i, int j){
 		if(this.graph.get(i).containsKey(j)){
 			this.graph.get(i).remove(j);
+			this.totalNetworkEdges -= 1;
 		}
-	}
-	
-	public int getTotalNetworkEdges(){
-		return this.totalNetworkEdges;
-	}
-	
-	public void increaseTotalNetworkEdgesCounterBy(int i){
-		this.totalNetworkEdges += i;
 	}
 	
 	public void addContagion(Contagion c){
 		this.contagions.add(c);
 	}
+	
+	//--------------------------------------------------------------------------------
+	// NETINF-RELATED COMPUTATIONS
+	//--------------------------------------------------------------------------------
 	
 	public double computeEdgePcPrime(int contagionIdx, int origin, int target){
 		Contagion c = this.contagions.get(contagionIdx);
@@ -103,7 +125,7 @@ public class Graph {
 		
 		//else (if target node is contaminated)
 		else{
-			double Pc = Aux.computePc(tOrigin, tTarget, Constants.alpha, model);
+			double Pc = Aux.computePc(tOrigin, tTarget, Constants.alpha, this.model);
 			//if is network edge
 			if(this.graph.get(origin).containsKey(target)){
 				return this.beta * Pc;
@@ -125,10 +147,16 @@ public class Graph {
 		return Math.log(PcPrime) - Math.log(this.epsilon*Pc);
 	}
 	
+	
+	//--------------------------------------------------------------------------------
+	// ALGORITHMS
+	//--------------------------------------------------------------------------------
+	
 	//Algorithm for Maximum Weight Directed Spanning Tree of a DAG (Algorithm 1 in NetInf Paper)
-	public Graph maximumSpanningTree(int contagionIndex, int[] vertices){
-		Graph tree = new Graph(vertices.length, this.epsilon, this.model);
-		
+	public Tree maximumSpanningTree(int contagionIndex, int[] vertices){
+		Tree maxSpanTree = new Tree(this.contagions.get(contagionIndex), vertices.length, this.epsilon, this.beta, this.model);
+		Contagion c = this.contagions.get(contagionIndex);
+		double tTarget, tOrigin;
 		for(int i=0; i<vertices.length; i++){
 			double maxWeight = 0D;
 			int maxWeightIndex = -1;
@@ -136,25 +164,32 @@ public class Graph {
 				if(i==j){
 					continue;
 				}
-				double currentWeight = computeEdgePcPrime(contagionIndex,vertices[j],vertices[i],this.model); 
+				tTarget = c.getInfectonTime(vertices[i]);
+				tOrigin = c.getInfectonTime(vertices[j]);
+				double currentWeight = Aux.computePc(tOrigin, tTarget, Constants.alpha, this.model);
 				if( maxWeight < currentWeight){
 					maxWeight = currentWeight;
 					maxWeightIndex = j;
 				}
 			}
-			tree.addEdge(vertices[maxWeightIndex], vertices[i], maxWeight);
+			int originVertex = vertices[maxWeightIndex];
+			int targetVertex = vertices[i]; 
+			maxSpanTree.addEdge(originVertex, targetVertex, maxWeight);
 		}
-		return tree;
+		return maxSpanTree;
 	} 
 	
 	//NetInf algorithm
 	public void buildNetInfGraph(int k){
 		int cSize = contagions.size();
-		Graph[] dagTree = new Graph[cSize];
+		Tree[] dagTree = new Tree[cSize];
 		for(int i=0;i<cSize; i++){
 			dagTree[i] = maximumSpanningTree(i, contagions.get(i).getInfectedNodesOrdered());
 		}
 		while(this.totalNetworkEdges < k){
+			double maxDeltaJI = 0D;
+			HashSet<Integer> maxMji = new HashSet<Integer>();
+			//for all (j,i) not in G
 			for(int i=0; i<totalNodes; i++){
 				for(int j=0; j<totalNodes; j++){
 					//we want edges (i!=j)
@@ -165,7 +200,7 @@ public class Graph {
 					if(graph.get(j).containsKey(i)){
 						continue;
 					}
-					double marginalImprovementJI = 0D;
+					double deltaJI = 0D;
 					HashSet<Integer> Mji = new HashSet<Integer>();
 					
 					for(int cIdx=0; cIdx<cSize; cIdx++){
@@ -182,7 +217,10 @@ public class Graph {
 						
 						
 						
-					}
+						
+						//increaseTotalNetworkEdgesCounterBy
+						
+					}// for c
 					
 				}// for j
 			}//for i

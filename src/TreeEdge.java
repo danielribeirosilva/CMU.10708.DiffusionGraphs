@@ -1,50 +1,37 @@
 
-public class Edge {
-	private int vertexI;
-	private int vertexJ;
-	private double beta;
+public class TreeEdge extends Edge{
 	
-	
+	private double weight;
+
+
 	//--------------------------------------------------------------------------------
 	// CONSTRUCTORS
 	//--------------------------------------------------------------------------------
 	
 	//Constructor 1 - for case where beta is constant
-	public Edge (int i, int j){
-		this.vertexI = i;
-		this.vertexJ = j;
+	public TreeEdge(int i, int j, double weight) {
+		super(i, j);
+		this.weight = weight;
 	}
 	
 	//Constructor 2 - for case where beta is learned for each edge
 	/*
-	public Edge (int i, int j, double beta){
-		this.vertexI = i;
-		this.vertexJ = j;
-		this.beta = beta;
+	public TreeEdge(int i, int j, double weight, double beta) {
+		super(i, j, beta);
+		this.weight = weight;
 	}
 	*/
-	
-	
 	
 	//--------------------------------------------------------------------------------
 	// GETTERS AND SETTERS
 	//--------------------------------------------------------------------------------
 	
-	public double getBeta(){
-		return this.beta;
+	public double getWeight(){
+		return this.weight;
 	}
 	
-	public void setBeta(double b){
-		this.beta = b;
+	public void setWeight(double w){
+		this.weight = w;
 	}
-	
-	public int getVertexI(){
-		return this.vertexI;
-	}
-	
-	public int getVertexJ(){
-		return this.vertexJ;
-	}
-	
-	
+
 }
