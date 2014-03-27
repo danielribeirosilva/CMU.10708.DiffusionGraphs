@@ -47,6 +47,10 @@ public class Contagion {
 		return Constants.INFECTION_TIME_OF_UNINFECTED_NODE;
 	}
 	
+	public int[] getInfectedNodesOrdered(){
+		return this.infectionOrder;
+	}
+	
 	public void setName(String name){
 		this.name = name;
 	}

@@ -2,21 +2,20 @@
 public class Aux {
 	
 	//Compute the weight of a directed edge based on the contamination times
-	public static double computeWeight(double tOrigin, double tTarget, double alpha, String model){
+	public static double computePc(double tOrigin, double tTarget, double alpha, String model){
 		
-		// probability is zero it tO>=tT (time flows in one direction)
-		if(tTarget <= tOrigin){
+		double delta = tTarget -  tOrigin;
+		
+		if(delta <= 0){
 			return 0D;
 		}
 		
 		//exponential-law: P(i,j) \propto exp(-delta/alpha)
 		if(model.equals("exponential-law")){
-			double delta = tTarget -  tOrigin;
 			return Math.exp( - delta / alpha);
 		}
 		//power-law: P(i,j) \propto 1 / delta^alpha
 		else if(model.equals("power-law")){
-			double delta = tTarget -  tOrigin;
 			return Math.pow(delta, -alpha);
 		}
 		
