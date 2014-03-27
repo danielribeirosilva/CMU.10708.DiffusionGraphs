@@ -1,6 +1,7 @@
 
 public class Aux {
 	
+	//Compute the weight of a directed edge based on the contamination times
 	public static double computeWeight(double tOrigin, double tTarget, double alpha, String model){
 		
 		// probability is zero it tO>=tT (time flows in one direction)

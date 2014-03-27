@@ -54,5 +54,9 @@ public class Contagion {
 	public String getName(){
 		return this.name;
 	}
+	
+	public boolean containsNode(int i){
+		return this.infectionTimes.containsKey(i);
+	}
 
 }

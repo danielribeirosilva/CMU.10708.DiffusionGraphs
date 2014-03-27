@@ -64,9 +64,38 @@ public class Graph {
 	
 	public double getEdgeWeight(int contagionIdx, int origin, int target, String model){
 		Contagion c = this.contagions.get(contagionIdx);
+		
+		//if either node is not contaminated
+		if(!c.containsNode(origin) || !c.containsNode(target)){
+			return 0D;
+		}
+		
 		double tOrigin = c.getInfectonTime(origin);
 		double tTarget = c.getInfectonTime(target);	
 		return Aux.computeWeight(tOrigin, tTarget, Constants.alpha, model);
 	}
+	
+	//Algorithm for Maximum Weight Directed Spanning Tree of a DAG (Algorithm 1 in NetInf Paper)
+	public Graph maximumSpanningTree(int contagionIndex, int[] vertices, String model){
+		Graph tree = new Graph(vertices.length, this.epsilon);
+		
+		for(int i=0; i<vertices.length; i++){
+			double maxWeight = 0D;
+			int maxWeightIndex = -1;
+			for(int j=0; j<vertices.length; j++){
+				if(i==j){
+					continue;
+				}
+				double currentWeight = getEdgeWeight(contagionIndex,vertices[i],vertices[j],model); 
+				if( maxWeight < currentWeight){
+					maxWeight = currentWeight;
+					maxWeightIndex = j;
+				}
+			}
+			tree.addEdge(vertices[i], vertices[maxWeightIndex], maxWeight);
+		}
+		return tree;
+	} 
+	
 
 }
