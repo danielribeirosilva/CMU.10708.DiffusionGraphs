@@ -11,6 +11,7 @@ public class Graph {
 	private int totalNodes; 
 	private int totalNetworkEdges;
 	private ArrayList<HashMap<Integer,Edge>> graph;
+	private ArrayList<String> labels;
 	private double epsilon;
 	private double beta;
 	private ArrayList<Contagion> contagions;
@@ -21,26 +22,43 @@ public class Graph {
 	// CONSTRUCTORS
 	//--------------------------------------------------------------------------------
 	
-	//Constructor 1 - for case where beta is constant across graph
-	public Graph(int totalNodes, double epsilon, double beta, String model){
+	//Constructor 1 - beta is constant across graph & empty graph
+	public Graph(double epsilon, double beta, String model){
 		this.model = model;
-		this.totalNodes = totalNodes;
+		this.totalNodes = 0;
 		this.totalNetworkEdges = 0;
 		this.epsilon = epsilon;
 		this.beta = beta;
+		this.labels = new ArrayList<String>();
+		this.contagions = new ArrayList<Contagion>();
 		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
 		for(int i=0; i<totalNodes; i++){
 			graph.add(i, new HashMap<Integer,Edge>());
 		}
 	}
 	
-	//Constructor 2 - for case where beta is learned for each edge
+	//Constructor 2 - beta is constant across graph & labels = index
+	public Graph(int totalNodes, double epsilon, double beta, String model){
+		this.model = model;
+		this.totalNodes = totalNodes;
+		this.totalNetworkEdges = 0;
+		this.epsilon = epsilon;
+		this.beta = beta;
+		this.contagions = new ArrayList<Contagion>();
+		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
+		for(int i=0; i<totalNodes; i++){
+			graph.add(i, new HashMap<Integer,Edge>());
+		}
+	}
+	
+	//Constructor 3 - for case where beta is learned for each edge
 	/*
 	public Graph(int totalNodes, double epsilon, String model){
 		this.model = model;
 		this.totalNodes = totalNodes;
 		this.totalNetworkEdges = 0;
 		this.epsilon = epsilon;
+		this.contagions = new ArrayList<Contagion>();
 		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
 		for(int i=0; i<totalNodes; i++){
 			graph.add(i, new HashMap<Integer,Edge>());
@@ -77,9 +95,19 @@ public class Graph {
 		return this.contagions.get(cIdx);
 	}
 	
+	public String getLabel(int idx){
+		return this.labels.get(idx);
+	}
+	
 	//--------------------------------------------------------------------------------
 	// STRUCTURE MODIFIERS
 	//--------------------------------------------------------------------------------
+	
+	public void addNode(String label){
+		this.graph.add(new HashMap<Integer,Edge>());
+		this.labels.add(label);
+		this.totalNodes += 1;
+	}
 	
 	public void addEdge(int i, int j){
 		Edge e = new Edge(i, j);
@@ -156,11 +184,11 @@ public class Graph {
 	
 	//Algorithm for Maximum Weight Directed Spanning Tree of a DAG (Algorithm 1 in NetInf Paper)
 	public Tree maximumSpanningTree(int contagionIndex, int[] vertices){
-		Tree maxSpanTree = new Tree(this.contagions.get(contagionIndex), vertices.length, this.epsilon, this.beta, this.model);
+		Tree maxSpanTree = new Tree(this.contagions.get(contagionIndex), vertices, this.epsilon, this.beta, this.model);
 		Contagion c = this.contagions.get(contagionIndex);
 		
 		for(int i=0; i<vertices.length; i++){
-			double maxWeight = 0D;
+			double maxWeight = 0D; //start with 0 and idx -1 to detect root
 			int maxWeightIndex = -1;
 			for(int j=0; j<vertices.length; j++){
 				if(i==j){
@@ -173,9 +201,11 @@ public class Graph {
 					maxWeightIndex = j;
 				}
 			}
-			int originVertex = vertices[maxWeightIndex];
-			int targetVertex = vertices[i]; 
-			maxSpanTree.addEdge(originVertex, targetVertex, maxWeight);
+			if(maxWeightIndex>-1){//if is not the root of the tree
+				int originVertex = vertices[maxWeightIndex];
+				int targetVertex = vertices[i]; 
+				maxSpanTree.addEdgeByOriginalIndex(originVertex, targetVertex, maxWeight);
+			}
 		}
 		return maxSpanTree;
 	} 
@@ -223,7 +253,7 @@ public class Graph {
 						this.addEdge(j, i);
 						
 						double wji = computeEdgeWc(cIdx, j, i);
-						double wjiTree = computeEdgeWc(cIdx, dagTree[cIdx].getParentFromNode(i), i);
+						double wjiTree = computeEdgeWc(cIdx, dagTree[cIdx].getParentFromNodeByOriginalIndex(i), i);
 						
 						if(wji >= wjiTree){
 							currentDeltaJI += wji - wjiTree;
@@ -252,11 +282,37 @@ public class Graph {
 			//update trees
 			for(int c : maxMji){
 				double newWeight = Aux.computePc(this.getContagion(c), jStar, iStar, Constants.alpha, this.model);
-				dagTree[c].changeParent(iStar, jStar, newWeight);
+				dagTree[c].changeParentByOriginalIndex(iStar, jStar, newWeight);
 			}
 			
 		}//while |G|<k
 	}//NetInf end
 	
+	
+	
+	
+	
+	
+	
+	
+	//--------------------------------------------------------------------------------
+	// DEBUG
+	//--------------------------------------------------------------------------------
+	
+	public void printEdges() {
+		System.out.println("Graph Edges");
+        for(int i=0; i<this.totalNodes; i++){
+        	for(int j : this.graph.get(i).keySet()){
+        		System.out.println(String.valueOf(i)+"->"+String.valueOf(j));
+        	}
+        }
+    }
+	
+	public void printNodes(){
+		System.out.println("Graph Nodes");
+		for(int i=0; i<this.totalNodes; i++){
+			System.out.println(String.valueOf(i)+"->"+this.labels.get(i));
+		} 
+	}
 
 }//Graph class end

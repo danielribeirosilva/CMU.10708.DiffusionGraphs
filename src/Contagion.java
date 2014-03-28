@@ -1,4 +1,5 @@
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 
@@ -9,7 +10,7 @@ public class Contagion {
 	private String name;
 	
 	//auxiliary class for sorting id and time arrays together
-	private class NodeTime implements Comparable<NodeTime>{
+	public class NodeTime implements Comparable<NodeTime>{
 		private int vertex;
 		private double time;
 		
@@ -25,20 +26,32 @@ public class Contagion {
 		}
 	}
 	
+	//--------------------------------------------------------------------------------
+	// CONSTRUCTORS
+	//--------------------------------------------------------------------------------
+	
 	public Contagion(int[] vertices, double[] infectionTime){
 		assert(vertices.length == infectionTime.length);
+		
 		int n = vertices.length;
-		NodeTime[] pairArray = new NodeTime[n];
+		this.infectionTimes = new HashMap<Integer,Double>();
+		
+		ArrayList<NodeTime> pairList = new ArrayList<NodeTime>();
 		for(int i=0; i<n; i++){
 			this.infectionTimes.put(vertices[i], infectionTime[i]);
-			pairArray[i] = new NodeTime(vertices[i], infectionTime[i]);
+			NodeTime nt = new NodeTime(vertices[i], infectionTime[i]); 
+			pairList.add(nt);
 		}
-		Arrays.sort(pairArray);
+		Collections.sort(pairList);
 		this.infectionOrder = new int[n];
 		for(int i=0; i<n; i++){
-			this.infectionOrder[i] = pairArray[i].getVertex();
+			this.infectionOrder[i] = pairList.get(i).getVertex();
 		}
 	}
+	
+	//--------------------------------------------------------------------------------
+	// GETTERS & SETTERS
+	//--------------------------------------------------------------------------------
 	
 	public double getInfectonTime(int vertex){
 		if(this.infectionTimes.containsKey(vertex)){
@@ -61,6 +74,21 @@ public class Contagion {
 	
 	public boolean containsNode(int i){
 		return this.infectionTimes.containsKey(i);
+	}
+	
+	
+	
+	
+	
+	
+	//--------------------------------------------------------------------------------
+	// DEBUG
+	//--------------------------------------------------------------------------------
+	public void printInfectionOrder(){
+		for(int i=0; i<this.infectionOrder.length; i++){
+			System.out.print(String.valueOf(this.infectionOrder[i])+" ");
+		}
+		System.out.println();
 	}
 
 }
