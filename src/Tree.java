@@ -50,6 +50,11 @@ public class Tree{
 	public Contagion getContagion(){
 		return this.c;
 	}
+	
+	public int getParentFromNode(int son){
+		return this.edgesIndexedByTarget.get(son);
+	}
+
 		
 	//--------------------------------------------------------------------------------
 	// STRUCTURE MODIFIERS
@@ -61,6 +66,18 @@ public class Tree{
 		this.edgesIndexedByTarget.put(j, i);
 	}
 	
+	public void removeEdge(int i, int j){
+		if(this.tree.get(i).containsKey(j)){
+			this.tree.get(i).remove(j);
+			this.edgesIndexedByTarget.remove(j);
+		}
+	}
+	
+	public void changeParent(int son, int newParent, double newWeight){
+		int oldParent = this.getParentFromNode(son);
+		this.removeEdge(oldParent, son);
+		this.addEdge(newParent, son, newWeight);
+	}
 	
 	
 

@@ -2,7 +2,10 @@
 public class Aux {
 	
 	//Compute the weight of a directed edge based on the contamination times
-	public static double computePc(double tOrigin, double tTarget, double alpha, String model){
+	public static double computePc(Contagion c, int origin, int target, double alpha, String model){
+		
+		double tOrigin = c.getInfectonTime(origin);
+		double tTarget = c.getInfectonTime(target);
 		
 		double delta = tTarget -  tOrigin;
 		

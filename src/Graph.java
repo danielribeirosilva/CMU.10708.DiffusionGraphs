@@ -73,11 +73,15 @@ public class Graph {
 		return this.model;
 	}
 	
+	public Contagion getContagion(int cIdx){
+		return this.contagions.get(cIdx);
+	}
+	
 	//--------------------------------------------------------------------------------
 	// STRUCTURE MODIFIERS
 	//--------------------------------------------------------------------------------
 	
-	public void addEdge(int i, int j, double weight){
+	public void addEdge(int i, int j){
 		Edge e = new Edge(i, j);
 		if(!this.graph.get(i).containsKey(j)){
 			this.totalNetworkEdges += 1;
@@ -125,7 +129,7 @@ public class Graph {
 		
 		//else (if target node is contaminated)
 		else{
-			double Pc = Aux.computePc(tOrigin, tTarget, Constants.alpha, this.model);
+			double Pc = Aux.computePc(c, origin, target, Constants.alpha, this.model);
 			//if is network edge
 			if(this.graph.get(origin).containsKey(target)){
 				return this.beta * Pc;
@@ -140,9 +144,7 @@ public class Graph {
 	public double computeEdgeWc(int contagionIdx, int origin, int target){
 		double PcPrime = computeEdgePcPrime(contagionIdx, origin, target);
 		Contagion c = this.contagions.get(contagionIdx);
-		double tOrigin = c.getInfectonTime(origin);
-		double tTarget = c.getInfectonTime(target);
-		double Pc = Aux.computePc(tOrigin, tTarget, Constants.alpha, this.model);
+		double Pc = Aux.computePc(c, origin, target, Constants.alpha, this.model);
 		
 		return Math.log(PcPrime) - Math.log(this.epsilon*Pc);
 	}
@@ -156,7 +158,7 @@ public class Graph {
 	public Tree maximumSpanningTree(int contagionIndex, int[] vertices){
 		Tree maxSpanTree = new Tree(this.contagions.get(contagionIndex), vertices.length, this.epsilon, this.beta, this.model);
 		Contagion c = this.contagions.get(contagionIndex);
-		double tTarget, tOrigin;
+		
 		for(int i=0; i<vertices.length; i++){
 			double maxWeight = 0D;
 			int maxWeightIndex = -1;
@@ -164,9 +166,8 @@ public class Graph {
 				if(i==j){
 					continue;
 				}
-				tTarget = c.getInfectonTime(vertices[i]);
-				tOrigin = c.getInfectonTime(vertices[j]);
-				double currentWeight = Aux.computePc(tOrigin, tTarget, Constants.alpha, this.model);
+				
+				double currentWeight = Aux.computePc(c, vertices[j], vertices[i], Constants.alpha, this.model);
 				if( maxWeight < currentWeight){
 					maxWeight = currentWeight;
 					maxWeightIndex = j;
@@ -187,8 +188,12 @@ public class Graph {
 			dagTree[i] = maximumSpanningTree(i, contagions.get(i).getInfectedNodesOrdered());
 		}
 		while(this.totalNetworkEdges < k){
-			double maxDeltaJI = 0D;
+			
+			//variables for keeping the max
+			double maxDeltaJI = Double.MIN_VALUE;
 			HashSet<Integer> maxMji = new HashSet<Integer>();
+			int iStar=-1, jStar=-1;
+			
 			//for all (j,i) not in G
 			for(int i=0; i<totalNodes; i++){
 				for(int j=0; j<totalNodes; j++){
@@ -200,8 +205,8 @@ public class Graph {
 					if(graph.get(j).containsKey(i)){
 						continue;
 					}
-					double deltaJI = 0D;
-					HashSet<Integer> Mji = new HashSet<Integer>();
+					double currentDeltaJI = 0D;
+					HashSet<Integer> currentMji = new HashSet<Integer>();
 					
 					for(int cIdx=0; cIdx<cSize; cIdx++){
 						//we only want contagions that contain i and j
@@ -214,19 +219,44 @@ public class Graph {
 							continue;
 						}
 						
+						//momentarily add (j,i) to the graph
+						this.addEdge(j, i);
 						
+						double wji = computeEdgeWc(cIdx, j, i);
+						double wjiTree = computeEdgeWc(cIdx, dagTree[cIdx].getParentFromNode(i), i);
 						
+						if(wji >= wjiTree){
+							currentDeltaJI += wji - wjiTree;
+							currentMji.add(cIdx);
+						}
 						
-						
-						//increaseTotalNetworkEdgesCounterBy
+						//remove the momentary (j,i) from G
+						this.removeEdge(j, i);
 						
 					}// for c
 					
+					//keep best edge
+					if(maxDeltaJI < currentDeltaJI){
+						maxDeltaJI = currentDeltaJI;
+						maxMji = currentMji;
+						iStar = i;
+						jStar = j;
+					}
+					
 				}// for j
 			}//for i
-		}
-		
-	}
+			
+			//permanently add best edge to the graph
+			this.addEdge(jStar, iStar);
+			
+			//update trees
+			for(int c : maxMji){
+				double newWeight = Aux.computePc(this.getContagion(c), jStar, iStar, Constants.alpha, this.model);
+				dagTree[c].changeParent(iStar, jStar, newWeight);
+			}
+			
+		}//while |G|<k
+	}//NetInf end
 	
 
-}
+}//Graph class end
