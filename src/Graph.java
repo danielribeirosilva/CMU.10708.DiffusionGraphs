@@ -135,8 +135,8 @@ public class Graph {
 	public double computeEdgePcPrime(int contagionIdx, int origin, int target){
 		Contagion c = this.contagions.get(contagionIdx);
 		
-		double tOrigin = c.getInfectonTime(origin);
-		double tTarget = c.getInfectonTime(target);
+		double tOrigin = c.getInfectionTime(origin);
+		double tTarget = c.getInfectionTime(target);
 		
 		// probability is 0 if tO>=tT (time flows in one direction)
 		if(tTarget <= tOrigin){
@@ -241,11 +241,11 @@ public class Graph {
 					for(int cIdx=0; cIdx<cSize; cIdx++){
 						//we only want contagions that contain i and j
 						Contagion currentC = this.contagions.get(cIdx);
-						if(!currentC.containsNode(i) || !currentC.containsNode(j)){
+						if( !currentC.containsNode(i) || !currentC.containsNode(j) ){
 							continue;
 						}
 						//we only want contagions such (j,i) has positive weight
-						if(currentC.getInfectonTime(j) >= currentC.getInfectonTime(i)){
+						if( currentC.getInfectionTime(j) >= currentC.getInfectionTime(i) ){
 							continue;
 						}
 						
@@ -253,6 +253,7 @@ public class Graph {
 						this.addEdge(j, i);
 						
 						double wji = computeEdgeWc(cIdx, j, i);
+						//System.out.println("c:"+String.valueOf(cIdx)+" i:"+String.valueOf(i)+" j:"+String.valueOf(j));
 						double wjiTree = computeEdgeWc(cIdx, dagTree[cIdx].getParentFromNodeByOriginalIndex(i), i);
 						
 						if(wji >= wjiTree){

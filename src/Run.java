@@ -4,7 +4,7 @@ public class Run {
 	public static void main(String[] args) {
 		
 		//dummy data 
-		int totalNodes = 11;
+		//int totalNodes = 11;
 		double epsilon = 0.9;
 		double beta = 0.99;
 		String model = "exponential-law";
@@ -20,51 +20,58 @@ public class Run {
 
 		
 		Contagion cA = new Contagion(verticesA,timesA);
+		cA.setName("A");
 		Contagion cB= new Contagion(verticesB,timesB);
+		cB.setName("B");
 		Contagion cC= new Contagion(verticesC,timesC);
+		cC.setName("C");
 		
-		Tree t = new Tree(cA, new int[]{0,1,2,3,4,5,6,7,8,9,10}, epsilon, beta, model);
-		t.addEdgeByIndex(1, 3, 0.54);
-		t.addEdgeByIndex(3, 4, 0.1);
-		t.addEdgeByIndex(3, 5, 0.65);
-		t.addEdgeByIndex(5, 7, 0.65);
-		t.printEdges();
+		cA.printInfectionOrder();
+		cB.printInfectionOrder();
+		cC.printInfectionOrder();
 		System.out.println("--------------");
-		
-		Graph g = new Graph(totalNodes, epsilon, beta, model);
+		Graph g = new Graph(11, epsilon, beta, model);
 		g.addContagion(cA);
 		g.addContagion(cB);
 		g.addContagion(cC);
-		
-		
-		int[] mstVertices = new int[]{2,3,5,6};
-		Tree mst = g.maximumSpanningTree(2, mstVertices);
+		System.out.println("max spanning tree");
+		cA.printInfectionOrder();
+		g.maximumSpanningTree(0, new int[]{2,3,4,5,6}).printEdges();
+		System.out.println("--------------");
+		cB.printInfectionOrder();
+		g.maximumSpanningTree(1, new int[]{3,5,6,7,8}).printEdges();
+		System.out.println("--------------");
 		cC.printInfectionOrder();
-		mst.printEdges();
+		g.maximumSpanningTree(2, new int[]{2,3,5,6,7}).printEdges();
 		System.out.println("--------------");
 		
-		Graph G = new Graph(epsilon, beta, model);
-		G.addNode("A");
-		G.addNode("B");
-		G.addNode("C");
-		G.addNode("D");
-		G.addNode("E");
-		G.addNode("F");
-		G.addNode("G");
-		G.addNode("H");
-		G.addNode("I");
-		G.addNode("J");
-		G.addNode("K");
-		G.addNode("L");
-		G.addNode("M");
-		G.addContagion(cA);
-		G.addContagion(cB);
-		G.addContagion(cC);
-		G.printNodes();
-		System.out.println("--------------");
+		int from = 3;
+		int to = 10;
 		
-		G.buildNetInfGraph(3);
-		G.printEdges();
+		for(int k=from; k<=to; k++){
+			Graph G = new Graph(epsilon, beta, model);
+			G.addNode("A");
+			G.addNode("B");
+			G.addNode("C");
+			G.addNode("D");
+			G.addNode("E");
+			G.addNode("F");
+			G.addNode("G");
+			G.addNode("H");
+			G.addNode("I");
+			G.addNode("J");
+			G.addNode("K");
+			G.addNode("L");
+			G.addNode("M");
+			G.addContagion(cA);
+			G.addContagion(cB);
+			G.addContagion(cC);
+			
+			G.buildNetInfGraph(k);
+			System.out.println("k="+String.valueOf(k));
+			G.printEdges();
+			System.out.println("--------------");
+		}
 		
 
 	}

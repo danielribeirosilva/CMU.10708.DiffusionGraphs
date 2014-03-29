@@ -35,6 +35,7 @@ public class Contagion {
 		
 		int n = vertices.length;
 		this.infectionTimes = new HashMap<Integer,Double>();
+		this.name = "";
 		
 		ArrayList<NodeTime> pairList = new ArrayList<NodeTime>();
 		for(int i=0; i<n; i++){
@@ -53,7 +54,7 @@ public class Contagion {
 	// GETTERS & SETTERS
 	//--------------------------------------------------------------------------------
 	
-	public double getInfectonTime(int vertex){
+	public double getInfectionTime(int vertex){
 		if(this.infectionTimes.containsKey(vertex)){
 			return this.infectionTimes.get(vertex);
 		}
@@ -85,6 +86,7 @@ public class Contagion {
 	// DEBUG
 	//--------------------------------------------------------------------------------
 	public void printInfectionOrder(){
+		System.out.println("Contagion "+this.name);
 		for(int i=0; i<this.infectionOrder.length; i++){
 			System.out.print(String.valueOf(this.infectionOrder[i])+" ");
 		}
