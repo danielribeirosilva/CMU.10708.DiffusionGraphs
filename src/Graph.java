@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +47,7 @@ public class Graph {
 		this.totalNetworkEdges = 0;
 		this.epsilon = epsilon;
 		this.beta = beta;
+		this.labels = new ArrayList<String>();
 		this.contagions = new ArrayList<Contagion>();
 		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
 		for(int i=0; i<totalNodes; i++){
@@ -108,6 +112,13 @@ public class Graph {
 		this.labels.add(label);
 		this.totalNodes += 1;
 	}
+	
+	public void addNode(int idx, String label){
+		this.graph.add(idx, new HashMap<Integer,Edge>());
+		this.labels.add(label);
+		this.totalNodes += 1;
+	}
+	
 	
 	public void addEdge(int i, int j){
 		Edge e = new Edge(i, j);
@@ -215,9 +226,14 @@ public class Graph {
 		int cSize = contagions.size();
 		Tree[] dagTree = new Tree[cSize];
 		for(int i=0;i<cSize; i++){
+			if(i == 13190){
+				System.out.println("here");
+			}
 			dagTree[i] = maximumSpanningTree(i, contagions.get(i).getInfectedNodesOrdered());
 		}
 		while(this.totalNetworkEdges < k){
+			
+			System.out.println("k: "+String.valueOf(this.totalNetworkEdges) + "/" + String.valueOf(k));
 			
 			//variables for keeping the max
 			double maxDeltaJI = Double.MIN_VALUE;
@@ -254,6 +270,7 @@ public class Graph {
 						
 						double wji = computeEdgeWc(cIdx, j, i);
 						//System.out.println("c:"+String.valueOf(cIdx)+" i:"+String.valueOf(i)+" j:"+String.valueOf(j));
+						int parentTestOriginal = dagTree[cIdx].getParentFromNodeByOriginalIndex(i);
 						double wjiTree = computeEdgeWc(cIdx, dagTree[cIdx].getParentFromNodeByOriginalIndex(i), i);
 						
 						if(wji >= wjiTree){
@@ -277,6 +294,12 @@ public class Graph {
 				}// for j
 			}//for i
 			
+			//if no more edges can be added
+			if(iStar < 0 || jStar < 0){
+				System.out.println("no more edges can be added. Total final edges: " + String.valueOf(this.totalNetworkEdges));
+				break;
+			}
+			
 			//permanently add best edge to the graph
 			this.addEdge(jStar, iStar);
 			
@@ -292,6 +315,75 @@ public class Graph {
 	
 	
 	
+	//--------------------------------------------------------------------------------
+	// OUTPUT
+	//--------------------------------------------------------------------------------
+	
+	public void outputGraph(String fileNameLocalIndexes, String fileNameTrueIndexes) throws Exception{
+		
+		//get nodes with edges
+		HashSet<Integer> nodesWithEdges = new HashSet<Integer>();
+		for(int i=0; i<this.totalNodes; i++){
+        	for(int j : this.graph.get(i).keySet()){
+        		nodesWithEdges.add(i);
+        		nodesWithEdges.add(j);
+        	}
+        }
+		
+		//map those nodes to a sequence from 1 to totalNodes
+		int totalNodes = nodesWithEdges.size();
+		HashMap<Integer, Integer> nodeMap = new HashMap<Integer, Integer>(); // <node, index>
+		int index = 1;
+		for(int node : nodesWithEdges){
+			nodeMap.put(node, index);
+			index++;
+		}
+		
+		//buffered writter for the local indexes
+		BufferedWriter bw = new BufferedWriter(new FileWriter(fileNameLocalIndexes));
+		
+		//output nodes
+		for(int i=1; i<=totalNodes; i++){
+			bw.append(String.valueOf(i)+"\n");
+		}
+		
+		bw.append("\n");
+		
+		//output edges
+		int i_idx, j_idx;
+		for(int i=0; i<this.totalNodes; i++){
+        	for(int j : this.graph.get(i).keySet()){
+        		i_idx = nodeMap.get(i);
+        		j_idx = nodeMap.get(j);
+        		bw.append(String.valueOf(i_idx)+"\t"+String.valueOf(j_idx)+"\n");
+        	}
+        }
+		
+		bw.flush();
+		bw.close();
+		
+		//buffered writter for the true indexes
+		bw = new BufferedWriter(new FileWriter(fileNameTrueIndexes));
+		
+		//output nodes
+		for(int n : nodesWithEdges){
+			bw.append(String.valueOf(n)+"\n");
+		}
+		
+		bw.append("\n");
+		
+		//output edges
+		for(int i=0; i<this.totalNodes; i++){
+        	for(int j : this.graph.get(i).keySet()){
+        		bw.append(String.valueOf(i)+"\t"+String.valueOf(j)+"\n");
+        	}
+        }
+		
+		bw.flush();
+		bw.close();
+		
+		System.out.println("Graph written to file");
+	}
 	
 	
 	

@@ -64,7 +64,8 @@ public class Tree{
 	
 	public int getParentFromNodeByOriginalIndex(int son){
 		int sonIdx = getNodeIndex(son);
-		return getParentFromNodeByIndex(sonIdx);
+		//return getParentFromNodeByIndex(sonIdx);
+		return this.nodeLabels[getParentFromNodeByIndex(sonIdx)];
 	}
 	
 	public int getNodeIndex(int nodeLabel){
