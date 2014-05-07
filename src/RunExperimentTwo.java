@@ -72,8 +72,8 @@ public class RunExperimentTwo {
 			it.remove();
 			
 			//contagions.put(c, new Contagion(nodesArray,timesArray));
-			//only add cascades with at least 3 nodes
-			if(nodesArray.length > 2){
+			//only add cascades with at least x nodes
+			if(nodesArray.length > 9){
 				contagions.put(realC, new Contagion(nodesArray,timesArray));
 				realC++;
 				//System.out.println("c size: " + String.valueOf(nodesArray.length));
@@ -85,6 +85,7 @@ public class RunExperimentTwo {
 		}
 		
 		System.out.println("contagion generated!");
+		System.out.println("total contagions: " + String.valueOf(realC));
 		contagionMap.clear();
 		br.close();
 		
@@ -93,10 +94,10 @@ public class RunExperimentTwo {
 		//READ NODES' NAME FILE
 		//count total nodes
 		int totalNodes = relevantNodes.size();
-		
+		System.out.println("totalNodes: " + String.valueOf(totalNodes));
 		
 		//initialize graph
-		Graph G = new Graph(totalNodes, epsilon, beta, model);
+		GraphB G = new GraphB(totalNodes, epsilon, beta, model);
 		
 		//add nodes to graph
 		br = new BufferedReader(new FileReader(pathNodesName));

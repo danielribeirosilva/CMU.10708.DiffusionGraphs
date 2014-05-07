@@ -8,11 +8,11 @@ import java.util.HashSet;
 // structure is meant for a sparse graph: only store non-zero values
 // But since we use epsilon-edges, strictly speaking, no edge will be zero
 // so we only store values that are "non-epsilon" 
-public class Graph {
+public class GraphB {
 	
 	private int totalNodes; 
 	private int totalNetworkEdges;
-	private ArrayList<HashMap<Integer,Edge>> graph;
+	private HashMap<Integer, HashMap<Integer,Edge>> graph;
 	private ArrayList<String> labels;
 	private double epsilon;
 	private double beta;
@@ -25,7 +25,7 @@ public class Graph {
 	//--------------------------------------------------------------------------------
 	
 	//Constructor 1 - beta is constant across graph & empty graph
-	public Graph(double epsilon, double beta, String model){
+	public GraphB(double epsilon, double beta, String model){
 		this.model = model;
 		this.totalNodes = 0;
 		this.totalNetworkEdges = 0;
@@ -33,14 +33,14 @@ public class Graph {
 		this.beta = beta;
 		this.labels = new ArrayList<String>();
 		this.contagions = new ArrayList<Contagion>();
-		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
+		this.graph = new HashMap<Integer, HashMap<Integer,Edge>>(totalNodes);
 		for(int i=0; i<totalNodes; i++){
-			graph.add(i, new HashMap<Integer,Edge>());
+			graph.put(i, new HashMap<Integer,Edge>());
 		}
 	}
 	
 	//Constructor 2 - beta is constant across graph & labels = index
-	public Graph(int totalNodes, double epsilon, double beta, String model){
+	public GraphB(int totalNodes, double epsilon, double beta, String model){
 		this.model = model;
 		this.totalNodes = totalNodes;
 		this.totalNetworkEdges = 0;
@@ -48,9 +48,9 @@ public class Graph {
 		this.beta = beta;
 		this.labels = new ArrayList<String>();
 		this.contagions = new ArrayList<Contagion>();
-		this.graph = new ArrayList<HashMap<Integer,Edge>>(totalNodes);
+		this.graph = new HashMap<Integer, HashMap<Integer,Edge>>(totalNodes);
 		for(int i=0; i<totalNodes; i++){
-			graph.add(i, new HashMap<Integer,Edge>());
+			graph.put(i, new HashMap<Integer,Edge>());
 		}
 	}
 	
@@ -106,14 +106,8 @@ public class Graph {
 	// STRUCTURE MODIFIERS
 	//--------------------------------------------------------------------------------
 	
-	public void addNode(String label){
-		this.graph.add(new HashMap<Integer,Edge>());
-		this.labels.add(label);
-		this.totalNodes += 1;
-	}
-	
 	public void addNode(int idx, String label){
-		this.graph.add(idx, new HashMap<Integer,Edge>());
+		this.graph.put(idx, new HashMap<Integer,Edge>());
 		this.labels.add(label);
 		this.totalNodes += 1;
 	}
@@ -225,9 +219,6 @@ public class Graph {
 		int cSize = contagions.size();
 		Tree[] dagTree = new Tree[cSize];
 		for(int i=0;i<cSize; i++){
-			if(i == 13190){
-				System.out.println("here");
-			}
 			dagTree[i] = maximumSpanningTree(i, contagions.get(i).getInfectedNodesOrdered());
 		}
 		while(this.totalNetworkEdges < k){
@@ -239,9 +230,12 @@ public class Graph {
 			HashSet<Integer> maxMji = new HashSet<Integer>();
 			int iStar=-1, jStar=-1;
 			
+			//int xx = 0;
+			
 			//for all (j,i) not in G
-			for(int i=0; i<totalNodes; i++){
-				for(int j=0; j<totalNodes; j++){
+			for(int i : graph.keySet()){
+				//if(xx++%100==0){System.out.println(String.valueOf(xx) + "/" + String.valueOf(graph.keySet().size()));}
+				for(int j : graph.keySet()){
 					//we want edges (i!=j)
 					if(i==j){
 						continue;
@@ -322,7 +316,7 @@ public class Graph {
 		
 		//get nodes with edges
 		HashSet<Integer> nodesWithEdges = new HashSet<Integer>();
-		for(int i=0; i<this.totalNodes; i++){
+		for(int i : this.graph.keySet()){
         	for(int j : this.graph.get(i).keySet()){
         		nodesWithEdges.add(i);
         		nodesWithEdges.add(j);
@@ -338,11 +332,11 @@ public class Graph {
 			index++;
 		}
 		
-		//buffered writter for the local indexes
+		//LOCAL INDEXES
 		BufferedWriter bw = new BufferedWriter(new FileWriter(fileNameLocalIndexes));
 		
 		//output nodes
-		for(int i=1; i<=totalNodes; i++){
+		for(int i=1; i<= this.graph.keySet().size(); i++){
 			bw.append(String.valueOf(i)+"\n");
 		}
 		
@@ -350,7 +344,7 @@ public class Graph {
 		
 		//output edges
 		int i_idx, j_idx;
-		for(int i=0; i<this.totalNodes; i++){
+		for(int i : this.graph.keySet()){
         	for(int j : this.graph.get(i).keySet()){
         		i_idx = nodeMap.get(i);
         		j_idx = nodeMap.get(j);
@@ -361,18 +355,11 @@ public class Graph {
 		bw.flush();
 		bw.close();
 		
-		//buffered writter for the true indexes
+		//TRUE INDEXES
 		bw = new BufferedWriter(new FileWriter(fileNameTrueIndexes));
-		
-		//output nodes
-		for(int n : nodesWithEdges){
-			bw.append(String.valueOf(n)+"\n");
-		}
-		
-		bw.append("\n");
-		
+				
 		//output edges
-		for(int i=0; i<this.totalNodes; i++){
+		for(int i : this.graph.keySet()){
         	for(int j : this.graph.get(i).keySet()){
         		bw.append(String.valueOf(i)+"\t"+String.valueOf(j)+"\n");
         	}
@@ -393,7 +380,7 @@ public class Graph {
 	
 	public void printEdges() {
 		System.out.println("Graph Edges");
-        for(int i=0; i<this.totalNodes; i++){
+        for(int i : this.graph.keySet()){
         	for(int j : this.graph.get(i).keySet()){
         		System.out.println(String.valueOf(i)+"->"+String.valueOf(j));
         	}
@@ -402,7 +389,7 @@ public class Graph {
 	
 	public void printNodes(){
 		System.out.println("Graph Nodes");
-		for(int i=0; i<this.totalNodes; i++){
+		for(int i : this.graph.keySet()){
 			System.out.println(String.valueOf(i)+"->"+this.labels.get(i));
 		} 
 	}
