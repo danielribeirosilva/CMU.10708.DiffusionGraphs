@@ -26,6 +26,7 @@ public class RunExperimentTwo {
 		double epsilon = 0.9;
 		double beta = 0.99;
 		String model = "exponential-law";
+		int minNodesInfected = 5;
 		
 		
 		//READ CONTAGION/CASCADES FILE
@@ -73,7 +74,7 @@ public class RunExperimentTwo {
 			
 			//contagions.put(c, new Contagion(nodesArray,timesArray));
 			//only add cascades with at least x nodes
-			if(nodesArray.length > 9){
+			if(nodesArray.length > minNodesInfected){
 				contagions.put(realC, new Contagion(nodesArray,timesArray));
 				realC++;
 				//System.out.println("c size: " + String.valueOf(nodesArray.length));
